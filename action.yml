@@ -1,11 +1,20 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Delete Loft VCluster'
+description: 'GitHub Action to delete a Loft VCluster'
+author: loft.sh
 inputs:
-  milliseconds: # change this
+  name:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'The name of the vcluster to delete'
+  cluster:
+    required: false
+    description: 'The cluster on which to delete the vcluster (if there are multiple vclusters with the same name across multiple clusters)'
+  space:
+    required: false
+    description: 'The space on which to delete the vcluster (if there are multiple vclusters with the same name across multiple spaces)'
+  delete-space:
+    required: false
+    description: Should the corresponding space be deleted
+    default: true
 runs:
   using: 'node12'
   main: 'dist/index.js'

@@ -15,10 +15,72 @@ jobs:
           npm install
       - run: |
           npm run all
-  test: # make sure the action works on a clean machine without building
+  test:
+    strategy:
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: loft-sh/setup-loft@main
+        with:
+          url: ${{ secrets.LOFT_URL }}
+          access-key: ${{ secrets.LOFT_ACCESS_KEY }}
+      - uses: loft-sh/create-vcluster@main
+        with:
+          name: delete-mycluster-${{ matrix.os }}
+      - run: loft list vclusters
+      - uses: ./
+        with:
+          name: delete-mycluster-${{ matrix.os }}
+      - run: loft list vclusters
+  test-space:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: loft-sh/setup-loft@main
+        with:
+          url: ${{ secrets.LOFT_URL }}
+          access-key: ${{ secrets.LOFT_ACCESS_KEY }}
+      - uses: loft-sh/create-space@main
+        with:
+          name: testspace
+      - uses: loft-sh/create-vcluster@main
+        with:
+          name: delete-mycluster-testspace
+          space: testspace
+      - run: loft list vclusters
       - uses: ./
         with:
-          milliseconds: 1000
+          name: delete-mycluster-testspace
+          space: testspace
+      - run: loft list vclusters
+      - run: loft list spaces
+  test-delete-space:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: loft-sh/setup-loft@main
+        with:
+          url: ${{ secrets.LOFT_URL }}
+          access-key: ${{ secrets.LOFT_ACCESS_KEY }}
+      - uses: loft-sh/create-space@main
+        with:
+          name: testspace-delete-space-false
+      - uses: loft-sh/create-vcluster@main
+        with:
+          name: delete-mycluster-testspace-delete-space-false
+          space: testspace-delete-space-false
+      - run: loft list vclusters
+      - uses: ./
+        with:
+          name: delete-mycluster-testspace-delete-space-false
+          space: testspace-delete-space-false
+          delete-space: false
+      - run: loft list vclusters
+      - run: loft list spaces
+      - uses: loft-sh/delete-space@main
+        with:
+          name: testspace-delete-space-false
