@@ -15,7 +15,16 @@ jobs:
           npm install
       - run: |
           npm run all
+  vcluster_id:
+    runs-on: ubuntu-latest
+    steps:
+      - id: vcluster_id
+        run: echo "::set-output name=id::$(uuidgen)"
+    outputs:
+      vcluster_id: ${{ steps.vcluster_id.outputs.id }}
   test:
+    needs:
+      - vcluster_id
     strategy:
       matrix:
         os:
@@ -28,15 +37,14 @@ jobs:
         with:
           url: ${{ secrets.LOFT_URL }}
           access-key: ${{ secrets.LOFT_ACCESS_KEY }}
-      - uses: loft-sh/create-vcluster@main
-        with:
-          name: delete-mycluster-${{ matrix.os }}
-      - run: loft list vclusters
+      - run: loft create vcluster ${{ matrix.os }}-${{ needs.vcluster_id.outputs.vcluster_id }}
       - uses: ./
         with:
-          name: delete-mycluster-${{ matrix.os }}
+          name: ${{ matrix.os }}-${{ needs.vcluster_id.outputs.vcluster_id }}
       - run: loft list vclusters
   test-space:
+    needs:
+      - vcluster_id
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,21 +52,15 @@ jobs:
         with:
           url: ${{ secrets.LOFT_URL }}
           access-key: ${{ secrets.LOFT_ACCESS_KEY }}
-      - uses: loft-sh/create-space@main
-        with:
-          name: testspace
-      - uses: loft-sh/create-vcluster@main
-        with:
-          name: delete-mycluster-testspace
-          space: testspace
-      - run: loft list vclusters
+      - run: loft create vcluster vcluster-space-${{ needs.vcluster_id.outputs.vcluster_id }} --space space-${{ needs.vcluster_id.outputs.vcluster_id }}
       - uses: ./
         with:
-          name: delete-mycluster-testspace
-          space: testspace
+          name: vcluster-space-${{ needs.vcluster_id.outputs.vcluster_id }}
+          space: space-${{ needs.vcluster_id.outputs.vcluster_id }}
       - run: loft list vclusters
-      - run: loft list spaces
   test-delete-space:
+    needs:
+      - vcluster_id
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -66,21 +68,11 @@ jobs:
         with:
           url: ${{ secrets.LOFT_URL }}
           access-key: ${{ secrets.LOFT_ACCESS_KEY }}
-      - uses: loft-sh/create-space@main
-        with:
-          name: testspace-delete-space-false
-      - uses: loft-sh/create-vcluster@main
-        with:
-          name: delete-mycluster-testspace-delete-space-false
-          space: testspace-delete-space-false
-      - run: loft list vclusters
+      - run: loft create vcluster delete-space-${{ needs.vcluster_id.outputs.vcluster_id }} --space delete-space-${{ needs.vcluster_id.outputs.vcluster_id }}
       - uses: ./
         with:
-          name: delete-mycluster-testspace-delete-space-false
-          space: testspace-delete-space-false
+          name: delete-space-${{ needs.vcluster_id.outputs.vcluster_id }}
           delete-space: false
       - run: loft list vclusters
       - run: loft list spaces
-      - uses: loft-sh/delete-space@main
-        with:
-          name: testspace-delete-space-false
+      - run: loft delete space delete-space-${{ needs.vcluster_id.outputs.vcluster_id }}
