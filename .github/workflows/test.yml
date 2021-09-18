@@ -15,10 +15,64 @@ jobs:
           npm install
       - run: |
           npm run all
-  test: # make sure the action works on a clean machine without building
+  vcluster_id:
+    runs-on: ubuntu-latest
+    steps:
+      - id: vcluster_id
+        run: echo "::set-output name=id::$(uuidgen)"
+    outputs:
+      vcluster_id: ${{ steps.vcluster_id.outputs.id }}
+  test:
+    needs:
+      - vcluster_id
+    strategy:
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: loft-sh/setup-loft@main
+        with:
+          url: ${{ secrets.LOFT_URL }}
+          access-key: ${{ secrets.LOFT_ACCESS_KEY }}
+      - run: loft create vcluster ${{ matrix.os }}-${{ needs.vcluster_id.outputs.vcluster_id }}
+      - uses: ./
+        with:
+          name: ${{ matrix.os }}-${{ needs.vcluster_id.outputs.vcluster_id }}
+      - run: loft list vclusters
+  test-space:
+    needs:
+      - vcluster_id
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: loft-sh/setup-loft@main
+        with:
+          url: ${{ secrets.LOFT_URL }}
+          access-key: ${{ secrets.LOFT_ACCESS_KEY }}
+      - run: loft create vcluster vcluster-space-${{ needs.vcluster_id.outputs.vcluster_id }} --space space-${{ needs.vcluster_id.outputs.vcluster_id }}
       - uses: ./
         with:
-          milliseconds: 1000
+          name: vcluster-space-${{ needs.vcluster_id.outputs.vcluster_id }}
+          space: space-${{ needs.vcluster_id.outputs.vcluster_id }}
+      - run: loft list vclusters
+  test-delete-space:
+    needs:
+      - vcluster_id
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: loft-sh/setup-loft@main
+        with:
+          url: ${{ secrets.LOFT_URL }}
+          access-key: ${{ secrets.LOFT_ACCESS_KEY }}
+      - run: loft create vcluster delete-space-${{ needs.vcluster_id.outputs.vcluster_id }} --space delete-space-${{ needs.vcluster_id.outputs.vcluster_id }}
+      - uses: ./
+        with:
+          name: delete-space-${{ needs.vcluster_id.outputs.vcluster_id }}
+          delete-space: false
+      - run: loft list vclusters
+      - run: loft list spaces
+      - run: loft delete space delete-space-${{ needs.vcluster_id.outputs.vcluster_id }}
