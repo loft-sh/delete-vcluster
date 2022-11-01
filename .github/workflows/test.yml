@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: vcluster_id
-        run: echo "::set-output name=id::$(uuidgen)"
+        run: echo "::set-output name=id::$RANDOM"
     outputs:
       vcluster_id: ${{ steps.vcluster_id.outputs.id }}
   test:
