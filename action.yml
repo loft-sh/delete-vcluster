@@ -8,6 +8,9 @@ inputs:
   cluster:
     required: false
     description: 'The cluster on which to delete the vcluster (if there are multiple vclusters with the same name across multiple clusters)'
+  project:
+    required: false
+    description: "The project to use"
   space:
     required: false
     description: 'The space on which to delete the vcluster (if there are multiple vclusters with the same name across multiple spaces)'
