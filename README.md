@@ -46,5 +46,6 @@ The following inputs can be used as `step.with` keys
 |---------------------|----------|------------------------------------|
 | `name`              | String   | The name of the vcluster to delete
 | `cluster`           | String   | The cluster on which to delete the vcluster (if there are multiple vclusters with the same name across multiple clusters)
+| `project`           | String   | The project to use (requires Loft 3.0 and above)
 | `space`             | String   | The space on which to delete the vcluster (if there are multiple vclusters with the same name across multiple spaces)
 | `delete-space`      | String   | Should the corresponding space be deleted
